@@ -5,13 +5,12 @@
 
 using namespace std;
 
-// Forward declarations
+// Предварительное объявление классов 
 class Customer;
 class Product;
 class Seller;
 class PaymentStrategy;
 
-// Base class for the marketplace
 class Marketplace {
 private:
     vector<Seller> sellers;
@@ -26,7 +25,6 @@ public:
     Product* findProduct(const string& productName);
 };
 
-// Class representing a Product
 class Product {
 private:
     string name;
@@ -54,7 +52,6 @@ bool Product::purchase(int quantityToBuy) {
     return false;
 }
 
-// Class representing a Seller
 class Seller {
 private:
     string name;
@@ -72,14 +69,13 @@ void Seller::addProduct(Marketplace& marketplace, const string& productName, dou
     marketplace.addProduct(Product(productName, price, quantity, id));
 }
 
-// Abstract PaymentStrategy class
 class PaymentStrategy {
 public:
     virtual ~PaymentStrategy() = default;
     virtual bool pay(double amount, double& balance) const = 0;
+    virtual string getPaymentMethodName() const = 0; // Новый метод для возврата названия метода оплаты
 };
 
-// Derived Payment strategies
 class CashPayment : public PaymentStrategy {
 public:
     bool pay(double amount, double& balance) const override {
@@ -88,6 +84,9 @@ public:
             return true;
         }
         return false;
+    }
+    string getPaymentMethodName() const override {
+        return "Cash";
     }
 };
 
@@ -100,6 +99,9 @@ public:
         }
         return false;
     }
+    string getPaymentMethodName() const override {
+        return "Card";
+    }
 };
 
 class CryptoPayment : public PaymentStrategy {
@@ -111,9 +113,11 @@ public:
         }
         return false;
     }
+    string getPaymentMethodName() const override {
+        return "Crypto";
+    }
 };
 
-// Class representing a Customer
 class Customer {
 private:
     string name;
@@ -140,6 +144,7 @@ bool Customer::buyProduct(Product& product, int quantity) {
         cout << "Product: " << product.getName() << "\n";
         cout << "Quantity: " << quantity << "\n";
         cout << "Total Cost: " << totalCost << "\n";
+        cout << "Payment Method: " << paymentMethod->getPaymentMethodName() << "\n"; // Добавлен вывод метода оплаты
         cout << "Remaining Balance: " << balance << "\n";
         return true;
     }
@@ -147,7 +152,6 @@ bool Customer::buyProduct(Product& product, int quantity) {
     return false;
 }
 
-// Marketplace implementation
 void Marketplace::addSeller(const Seller& seller) {
     sellers.push_back(seller);
 }
@@ -160,11 +164,11 @@ void Marketplace::addProduct(const Product& product) {
     products.push_back(product);
 }
 
-const std::vector<Product>& Marketplace::listProducts() const {
+const vector<Product>& Marketplace::listProducts() const {
     return products;
 }
 
-Product* Marketplace::findProduct(const std::string& productName) {
+Product* Marketplace::findProduct(const string& productName) {
     for (auto& product : products) {
         if (product.getName() == productName) {
             return &product;
@@ -176,30 +180,25 @@ Product* Marketplace::findProduct(const std::string& productName) {
 int main() {
     Marketplace marketplace;
 
-    // Create sellers
     Seller seller1("Alice", 1);
     Seller seller2("Bob", 2);
 
     marketplace.addSeller(seller1);
     marketplace.addSeller(seller2);
 
-    // Add products
     seller1.addProduct(marketplace, "Laptop", 1000.0, 5);
     seller2.addProduct(marketplace, "Phone", 500.0, 10);
 
-    // Create customers
-    Customer customer1("John", 2000.0);
-    customer1.setPaymentMethod(std::make_shared<CashPayment>());
+    Customer customer1("John", 2100.0);
+    customer1.setPaymentMethod(make_shared<CryptoPayment>());
 
     marketplace.addCustomer(customer1);
 
-    // List products
     cout << "Available products: \n";
     for (const auto& product : marketplace.listProducts()) {
         cout << "- " << product.getName() << " ($" << product.getPrice() << ", Quantity: " << product.getQuantity() << ")\n";
     }
 
-    // Customer makes a purchase
     Product* productToBuy = marketplace.findProduct("Laptop");
     if (productToBuy) {
         customer1.buyProduct(*productToBuy, 2);
